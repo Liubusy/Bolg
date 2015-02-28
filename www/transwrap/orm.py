@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-__author__ = 'Michael Liao'
-
 '''
 Database operation module. This module is independent with web module.
 '''
@@ -40,71 +38,58 @@ class Field(object):
         return ''.join(s)
 
 class StringField(Field):
-
-    def __init__(self, **kw):
-        if not 'default' in kw:
+    def __init__(self,**kw):
+        if not 'default'  in kw:
             kw['default'] = ''
         if not 'ddl' in kw:
             kw['ddl'] = 'varchar(255)'
-        super(StringField, self).__init__(**kw)
-
-class IntegerField(Field):
-
-    def __init__(self, **kw):
-        if not 'default' in kw:
-            kw['default'] = 0
-        if not 'ddl' in kw:
-            kw['ddl'] = 'bigint'
-        super(IntegerField, self).__init__(**kw)
+        super(StringField,self).__init__(**kw)
 
 class FloatField(Field):
-
-    def __init__(self, **kw):
+    def __init__(self,**kw):
         if not 'default' in kw:
             kw['default'] = 0.0
         if not 'ddl' in kw:
             kw['ddl'] = 'real'
-        super(FloatField, self).__init__(**kw)
+        super(FloatField,self).__init__(**kw)
 
 class BooleanField(Field):
-
-    def __init__(self, **kw):
+    def __init__(self,**kw):
         if not 'default' in kw:
             kw['default'] = False
         if not 'ddl' in kw:
             kw['ddl'] = 'bool'
-        super(BooleanField, self).__init__(**kw)
+        super(BooleanField,self).__init__(**kw)
 
 class TextField(Field):
-
-    def __init__(self, **kw):
+    def __init__(self,**kw):
         if not 'default' in kw:
             kw['default'] = ''
         if not 'ddl' in kw:
             kw['ddl'] = 'text'
-        super(TextField, self).__init__(**kw)
+        super(TextField,self).__init__(**kw)
 
 class BlobField(Field):
 
-    def __init__(self, **kw):
+    def __init__(self,**kw):
         if not 'default' in kw:
             kw['default'] = ''
         if not 'ddl' in kw:
             kw['ddl'] = 'blob'
-        super(BlobField, self).__init__(**kw)
+        super(BlobField,self).__init__(**kw)
 
 class VersionField(Field):
 
-    def __init__(self, name=None):
-        super(VersionField, self).__init__(name=name, default=0, ddl='bigint')
+    def __init__(self,name=None):
+        super(VersionField,self).__init__(name=name,default=0,ddl='bigint')
 
-_triggers = frozenset(['pre_insert', 'pre_update', 'pre_delete'])
+_triggers = frozenset(['pre_insert','pre_update','pre_delete'])
 
-def _gen_sql(table_name, mappings):
+def _gen_sql(table_name,mappings):
     pk = None
-    sql = ['-- generating SQL for %s:' % table_name, 'create table `%s` (' % table_name]
-    for f in sorted(mappings.values(), lambda x, y: cmp(x._order, y._order)):
-        if not hasattr(f, 'ddl'):
+    sql = ['--generating SQL for %s:' % table_name,'create table `%s` ()']
+    for f in sorted(mappings.values(),lambda x,y:cmp(x._order,y._order)):
+        if not hasattr(f,'ddl'):
             raise StandardError('no ddl in field "%s".' % n)
         ddl = f.ddl
         nullable = f.nullable
@@ -117,60 +102,63 @@ def _gen_sql(table_name, mappings):
 
 class ModelMetaclass(type):
     '''
-    Metaclass for model objects.
+    Metaclass for Model objects
     '''
-    def __new__(cls, name, bases, attrs):
-        # skip base Model class:
-        if name=='Model':
-            return type.__new__(cls, name, bases, attrs)
-
-        # store all subclasses info:
-        if not hasattr(cls, 'subclasses'):
+    def __new__(cls,name,bases,attrs):
+        #skip base Model class
+        if name == 'Model':
+            return type.__new__(cls,name,bases,attrs)
+        #store all subclass info
+        if not hasattr(cls,'subclasses'):
             cls.subclasses = {}
         if not name in cls.subclasses:
             cls.subclasses[name] = name
         else:
-            logging.warning('Redefine class: %s' % name)
+            logging.warning('Redefine class：%s' % name)
 
         logging.info('Scan ORMapping %s...' % name)
         mappings = dict()
         primary_key = None
-        for k, v in attrs.iteritems():
-            if isinstance(v, Field):
+        #print attrs
+        for k,v in attrs.iteritems():
+            #print '%s=%s' % (k,v)
+            if isinstance(v,Field):
                 if not v.name:
                     v.name = k
-                logging.info('Found mapping: %s => %s' % (k, v))
-                # check duplicate primary key:
+                logging.info('Found mapping: %s => %s' % (k,v))
+                #check duplication primary key
                 if v.primary_key:
+                    #print 'primary_key'
                     if primary_key:
                         raise TypeError('Cannot define more than 1 primary key in class: %s' % name)
                     if v.updatable:
                         logging.warning('NOTE: change primary key to non-updatable.')
                         v.updatable = False
                     if v.nullable:
-                        logging.warning('NOTE: change primary key to non-nullable.')
+                        logging.warning('NOTE :change primary key to non-nullable.')
                         v.nullable = False
                     primary_key = v
                 mappings[k] = v
-        # check exist of primary key:
+                #print mappings
+            #check exist of primary key
         if not primary_key:
-            raise TypeError('Primary key not defined in class: %s' % name)
+            raise TypeError('primary key not defined in class %s' % name)
         for k in mappings.iterkeys():
             attrs.pop(k)
         if not '__table__' in attrs:
             attrs['__table__'] = name.lower()
+        # 读取cls的Field字段
         attrs['__mappings__'] = mappings
         attrs['__primary_key__'] = primary_key
-        attrs['__sql__'] = lambda self: _gen_sql(attrs['__table__'], mappings)
+        attrs['__sql__'] = lambda self:_gen_sql(attrs['__table__'],mappings)
         for trigger in _triggers:
             if not trigger in attrs:
                 attrs[trigger] = None
-        return type.__new__(cls, name, bases, attrs)
+        return type.__new__(cls,name,bases,attrs)
 
 class Model(dict):
     '''
     Base class for ORM.
-
     >>> class User(Model):
     ...     id = IntegerField(primary_key=True)
     ...     name = StringField()
@@ -216,16 +204,16 @@ class Model(dict):
     '''
     __metaclass__ = ModelMetaclass
 
-    def __init__(self, **kw):
-        super(Model, self).__init__(**kw)
+    def __init__(self,**kw):
+        super(Model,self).__init__(**kw)
 
-    def __getattr__(self, key):
+    def __getattr__(self,key):
         try:
             return self[key]
         except KeyError:
-            raise AttributeError(r"'Dict' object has no attribute '%s'" % key)
+            raise AttrbuteError(r"'Dict' object has no attribute '%s'" % key)
 
-    def __setattr__(self, key, value):
+    def __setattr__(self,key,value):
         self[key] = value
 
     @classmethod
@@ -277,44 +265,44 @@ class Model(dict):
 
     def update(self):
         self.pre_update and self.pre_update()
-        L = []
+        l = []
         args = []
-        for k, v in self.__mappings__.iteritems():
+        for k,v in self.__mappings__.iteritems():
             if v.updatable:
-                if hasattr(self, k):
-                    arg = getattr(self, k)
+                if hasattr(self,k):
+                    arg = getattr(self,k)
                 else:
                     arg = v.default
-                    setattr(self, k, arg)
+                    setattr(self,k,arg)
                 L.append('`%s`=?' % k)
                 args.append(arg)
         pk = self.__primary_key__.name
-        args.append(getattr(self, pk))
-        db.update('update `%s` set %s where %s=?' % (self.__table__, ','.join(L), pk), *args)
+        args.append(getattr(self,k))
+        db.update('update `%s` set %s where %s=?' % (self.__table__, ','.join(L), pk),*args)
         return self
 
     def delete(self):
         self.pre_delete and self.pre_delete()
         pk = self.__primary_key__.name
-        args = (getattr(self, pk), )
-        db.update('delete from `%s` where `%s`=?' % (self.__table__, pk), *args)
+        args = (getattr(self,pk),)
+        db.update('delete from `%s` where `%s`=?' % (self.__table__,pk),*args)
         return self
 
     def insert(self):
         self.pre_insert and self.pre_insert()
         params = {}
-        for k, v in self.__mappings__.iteritems():
+        for k,v in self.__mappings__.iteritems():
             if v.insertable:
-                if not hasattr(self, k):
-                    setattr(self, k, v.default)
-                params[v.name] = getattr(self, k)
+                if not hasattr(self,k):
+                    setattr(self,k,v.default)
+                params[v.name] = getattr(self,k)
         db.insert('%s' % self.__table__, **params)
         return self
 
 if __name__=='__main__':
     logging.basicConfig(level=logging.DEBUG)
-    db.create_engine('www-data', 'www-data', 'test')
+    db.create_engine('root','password','test')
     db.update('drop table if exists user')
     db.update('create table user (id int primary key, name text, email text, passwd text, last_modified real)')
-    import doctest
-    doctest.testmod()
+    #import doctest
+    #doctest.testmod()

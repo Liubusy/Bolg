@@ -157,6 +157,7 @@ def create_engine(user, password, database, host='127.0.0.1', port=3306, **kw):
     engine = _Engine(lambda: mysql.connector.connect(**params))
     # test connection...
     logging.info('Init mysql engine <%s> ok.' % hex(id(engine)))
+
 #_ConnectionCxt上下文类，__enter__()方法判断是否已经建立链接，没有则执行初始化数据库链接，并把是否需要清理置为True，__exit__()判断是否需要执行清理，需要则关闭连接
 class _ConnectionCtx(object):
     '''
@@ -466,6 +467,7 @@ if __name__=='__main__':
     create_engine('root','password','test')
     u = select_one('select * from user where id=?', '100')
     print u
+    print u.email
     '''
     update('drop table if exists blog')
     update('create table blog (id int primary key, name text, email text, passwd text, last_modified real)')
