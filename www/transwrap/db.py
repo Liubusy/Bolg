@@ -142,7 +142,7 @@ class _Engine(object):
     def connect(self):
         return self._connect()
 
-#createengine函数会生成一个全局变量engine，engine为持有数据库建立*函数*的对象(Engine类的实例);
+#create_engine函数会生成一个全局变量engine，engine为持有数据库建立*函数*的对象(Engine类的实例);
 def create_engine(user, password, database, host='127.0.0.1', port=3306, **kw):
     import mysql.connector
     global engine
@@ -466,8 +466,8 @@ if __name__=='__main__':
     logging.basicConfig(level=logging.DEBUG)
     create_engine('root','password','test')
     u = select_one('select * from user where id=?', '100')
-    print u
-    print u.email
+    #print u
+    #print u.email
     '''
     update('drop table if exists blog')
     update('create table blog (id int primary key, name text, email text, passwd text, last_modified real)')

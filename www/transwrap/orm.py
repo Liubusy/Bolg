@@ -8,7 +8,8 @@ Database operation module. This module is independent with web module.
 import time, logging
 
 import db
-
+#Field类代表DB中tabale的每一个字段
+#对象初始化的时候需要定义的属性有，字段名称，字段数据类型，是否为主键，是否可为空，字段默认值，是否可更改等字段属性
 class Field(object):
 
     _count = 0
@@ -37,6 +38,7 @@ class Field(object):
         s.append('>')
         return ''.join(s)
 
+#定义了一个字符串类型的子类
 class StringField(Field):
     def __init__(self,**kw):
         if not 'default'  in kw:
@@ -155,7 +157,8 @@ class ModelMetaclass(type):
             if not trigger in attrs:
                 attrs[trigger] = None
         return type.__new__(cls,name,bases,attrs)
-
+#要实现ORM需要定义一个Mode类，所有的表映射都是Mode的子类
+#表的实例中一个字段的值与字段名称是key-value的关系，所以dict可用作为Mode的父类
 class Model(dict):
     '''
     Base class for ORM.
@@ -202,6 +205,8 @@ class Model(dict):
       primary key(`id`)
     );
     '''
+    #元类ModelMetaclass所做的事情就是拦截Mode类的创建，获取所有的类属性，
+    #如果发现类属性为Field的子类，则建立映射关系
     __metaclass__ = ModelMetaclass
 
     def __init__(self,**kw):
