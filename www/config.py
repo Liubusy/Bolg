@@ -1,11 +1,9 @@
-!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 '''
 Configuration
 '''
 
-__author__ = 'Michael Liao'
 
 import config_default
 

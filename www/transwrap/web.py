@@ -803,7 +803,7 @@ class WSGIApplication(object):
         logging.info('add route %s ' % route.method+':'+route.path)
 
     # 从模块添加url
-    def add_model(self, mod):
+    def add_module(self, mod):
         self._check_not_running()
         m = mod
         logging.info('add model %s' % mod.__name__)
